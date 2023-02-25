@@ -1,6 +1,7 @@
 
 
 import numpy as np
+import copy
 import time
 import torch
 import torch.nn as nn
@@ -66,62 +67,6 @@ class CustomDataset(Dataset):
         image, label = self.dataset[self.idxs[index]]
         return image, label
 
-
-## training algorithms
-
-class ClientUpdate(object):
-    def __init__(self, dataset, batchsize, lr, epochs, idxs):
-        
-        self.train_dl = DataLoader(CustomDataset(dataset, idxs), batch_size=batchsize, shuffle=True)
-        self.lr = lr
-        self.epochs = epochs
-
-    def train(self, model):
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.parameters(), lr=self.lr, momentum=0.5)
-        # TODO: figure out why momentum is used
-        
-        epoch_loss = []
-
-        for epoch in range(self.epochs):            
-            train_loss = 0.0
-            model.train()
-
-            for x, y in self.train_dl:
-
-                if torch.cuda.is_available():
-                    x, y = x.cuda(), y.cuda()
-
-                optimizer.zero_grad()
-                preds = model(x)
-                loss = criterion(preds, y)
-                loss.backward()
-                optimizer.step()
-                # update training loss
-                train_loss += loss.item() * x.size(0)
-
-            # average losses
-            train_loss = train_loss / len(self.train_dl.dataset)
-            epoch_loss.append(train_loss)
-
-        total_loss = sum(epoch_loss) / len(epoch_loss)
-
-        return model.state_dict(), total_loss
-    
-
-## server side training
-def training(model, rounds, batch_size, lr, ds, data_dict, C, K, E, plt_title, plt_color):
-
-    global_weights = model.state_dict()
-    train_loss = []
-    start = time.time()
-
-    for curr_round in range(rounds):
-        w, local_loss = [], []
-
-        m = max(int(C * K), 1)
-
-    # TODO: complete the code
 
 
 if __name__ == '__main__':
